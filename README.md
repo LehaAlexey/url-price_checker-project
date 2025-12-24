@@ -2,6 +2,10 @@
 
 Монорепа с набором сервисов для парсинга цен, хранения пользователей и истории, и HTTP BFF.
 
+## По оценке
+
+Файл покрытый тестами - `services/parsing/internal/parser/extractor_test.go`.
+
 ## Состав
 
 - `services/parsing` - читает `ParseRequested` из Kafka и пишет `PriceMeasured`
