@@ -1,0 +1,12 @@
+[submodule "services/parsing"]
+	path = services/parsing
+	url = https://github.com/LehaAlexey/parsing
+[submodule "services/users"]
+	path = services/users
+	url = https://github.com/LehaAlexey/users
+[submodule "services/history"]
+	path = services/history
+	url = https://github.com/LehaAlexey/history
+[submodule "services/gateway"]
+	path = services/gateway
+	url = https://github.com/LehaAlexey/gateway
