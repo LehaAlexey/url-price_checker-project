@@ -22,7 +22,7 @@
 
 Коротко: нужен Docker, остальное уже в compose.
 
-- PostgreSQL, Kafka и Redis не ставятся вручную — поднимаются контейнерами из `docker-compose.yaml`
+- PostgreSQL, Kafka и Redis поднимаются контейнерами из `docker-compose.yaml`
 - Сервисам нужен только `config.yaml` (он лежит в каждом сервисе)
 
 Порты по умолчанию:
