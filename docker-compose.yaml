@@ -1,0 +1,158 @@
+version: '3.8'
+
+services:
+  kafka:
+    image: apache/kafka:latest
+    container_name: stack-kafka
+    environment:
+      - CLUSTER_ID=5L6g3nShT-eMCtK--X86sw
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_LISTENERS=PLAINTEXT_HOST://:9080,PLAINTEXT_DOCKER://:9070,CONTROLLER://:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT_HOST://localhost:9080,PLAINTEXT_DOCKER://kafka:9070
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_DOCKER:PLAINTEXT
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT_DOCKER
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+      - KAFKA_LOG_DIRS=/tmp/kraft-combined-logs
+    ports:
+      - "9080:9080"
+      - "9070:9070"
+    networks:
+      - stack-net
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: stack-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka:9070
+      - KAFKA_CLUSTERS_0_NAME=kraft
+      - KAFKA_UI_AUTH_ENABLED=false
+    networks:
+      - stack-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: stack-redis
+    command: ["redis-server","--maxmemory","2gb","--maxmemory-policy","allkeys-lru"]
+    ports:
+      - "6379:6379"
+    networks:
+      - stack-net
+
+  users-postgres:
+    image: postgres:15-alpine
+    container_name: stack-users-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: users
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./services/users/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - stack-net
+
+  history-postgres:
+    image: postgres:15-alpine
+    container_name: stack-history-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: history
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./services/history/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - stack-net
+
+  parsing-service:
+    build:
+      context: ./services/parsing
+      dockerfile: Dockerfile
+    container_name: parsing-service
+    depends_on:
+      - kafka
+    environment:
+      - configPath=/app/config.yaml
+    ports:
+      - "8070:8070"
+    networks:
+      - stack-net
+
+  users-service:
+    build:
+      context: ./services/users
+      dockerfile: Dockerfile
+    container_name: users-service
+    depends_on:
+      - kafka
+      - users-postgres
+    environment:
+      - configPath=/app/config.yaml
+    ports:
+      - "8071:8071"
+      - "50061:50061"
+    networks:
+      - stack-net
+
+  history-service:
+    build:
+      context: ./services/history
+      dockerfile: Dockerfile
+    container_name: history-service
+    depends_on:
+      - kafka
+      - history-postgres
+      - redis
+    environment:
+      - configPath=/app/config.yaml
+    ports:
+      - "8072:8072"
+      - "50062:50062"
+    networks:
+      - stack-net
+
+  gateway-service:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    depends_on:
+      - users-service
+      - history-service
+    environment:
+      - configPath=/app/config.yaml
+    ports:
+      - "8080:8080"
+    networks:
+      - stack-net
+
+  kadeck:
+    image: xeotek/kadeck:6.3.5
+    container_name: kadeck
+    environment:
+      - xeotek_kadeck_free=<your_email_address>
+      - xeotek_kadeck_port=8080
+    ports:
+      - "8083:8080"
+    volumes:
+      - kadeck_data:/home/.kadeck/
+    networks:
+      - stack-net
+
+networks:
+  stack-net:
+    name: stack-net
+    driver: bridge
+
+volumes:
+  kadeck_data:
