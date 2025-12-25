@@ -2,6 +2,10 @@
 
 Монорепа с набором сервисов для парсинга цен, хранения пользователей и истории, и HTTP BFF.
 
+## По оценке
+
+Файл покрытый тестами - `services/parsing/internal/parser/extractor_test.go`.
+
 ## Состав
 
 - `services/parsing` - читает `ParseRequested` из Kafka и пишет `PriceMeasured`
@@ -18,7 +22,11 @@
 
 Коротко: нужен Docker, остальное уже в compose.
 
+<<<<<<< HEAD
 - PostgreSQL, Kafka и Redis не ставятся вручную - поднимаются контейнерами из `docker-compose.yaml`
+=======
+- PostgreSQL, Kafka и Redis поднимаются контейнерами из `docker-compose.yaml`
+>>>>>>> b51f1900f652324374c4d1934087ca649fb97b70
 - Сервисам нужен только `config.yaml` (он лежит в каждом сервисе)
 
 Порты по умолчанию:
